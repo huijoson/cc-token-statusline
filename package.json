@@ -1,0 +1,29 @@
+{
+  "name": "cc-token-statusline",
+  "version": "0.1.0",
+  "description": "Portable Claude Code statusLine: context %, weekly rate-limit remaining, and per-conversation token usage. Zero dependencies, no state files, no hooks.",
+  "license": "MIT",
+  "author": "Lawrence (huijoson)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huijoson/cc-token-statusline.git"
+  },
+  "bin": {
+    "cc-token-statusline": "./bin/statusline.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "claude-code",
+    "statusline",
+    "claude",
+    "cli"
+  ]
+}
