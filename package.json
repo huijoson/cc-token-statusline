@@ -9,7 +9,7 @@
     "url": "git+https://github.com/huijoson/cc-token-statusline.git"
   },
   "bin": {
-    "cc-token-statusline": "./bin/statusline.js"
+    "cc-token-statusline": "bin/statusline.js"
   },
   "files": [
     "bin"
