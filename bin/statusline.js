@@ -18,7 +18,7 @@ const USAGE_FIELDS = [
 ];
 
 // Field keys accepted by --show/--hide, in render order.
-const ALL_FIELDS = ["ctx", "wk", "cwd", "in", "out", "cr", "cw", "tot"];
+const ALL_FIELDS = ["ctx", "wk", "cwd", "in", "out", "th", "cr", "cw", "tot"];
 const DEFAULT_VISIBLE_FIELDS = new Set(ALL_FIELDS);
 
 function parseFieldList(str) {
@@ -69,6 +69,7 @@ function formatTokens(value) {
 // are de-duplicated by `message.id` before summing.
 function aggregateTranscriptUsage(transcriptPath) {
   const totals = Object.fromEntries(USAGE_FIELDS.map((field) => [field, 0]));
+  totals.thinking_tokens = 0;
   if (!transcriptPath || typeof transcriptPath !== "string") return totals;
 
   let raw;
@@ -109,6 +110,13 @@ function sumUsageLines(raw, totals) {
       if (typeof value === "number" && Number.isFinite(value)) {
         totals[field] += value;
       }
+    }
+
+    // thinking_tokens is a breakdown of output_tokens, not additional to
+    // it — don't fold this into `tot`, it would double-count.
+    const thinking = usage.output_tokens_details?.thinking_tokens;
+    if (typeof thinking === "number" && Number.isFinite(thinking)) {
+      totals.thinking_tokens += thinking;
     }
   }
   return totals;
@@ -168,6 +176,7 @@ function renderUsageLine(data, visible = DEFAULT_VISIBLE_FIELDS) {
   const parts = [];
   if (visible.has("in")) parts.push(`in ${formatTokens(totals.input_tokens)}`);
   if (visible.has("out")) parts.push(`out ${formatTokens(totals.output_tokens)}`);
+  if (visible.has("th")) parts.push(`th ${formatTokens(totals.thinking_tokens)}`);
   if (visible.has("cr")) parts.push(`cr ${formatTokens(totals.cache_read_input_tokens)}`);
   if (visible.has("cw")) parts.push(`cw ${formatTokens(totals.cache_creation_input_tokens)}`);
   if (visible.has("tot")) parts.push(`tot ${formatTokens(total)}`);

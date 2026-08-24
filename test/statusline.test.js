@@ -46,7 +46,22 @@ test("aggregateTranscriptUsage sums usage once per unique message.id", () => {
     output_tokens: 161,
     cache_read_input_tokens: 250,
     cache_creation_input_tokens: 10,
+    thinking_tokens: 0,
   });
+
+  fs.unlinkSync(file);
+});
+
+test("aggregateTranscriptUsage sums output_tokens_details.thinking_tokens once per unique message.id", () => {
+  const file = writeTempTranscript([
+    { type: "assistant", message: { id: "msg_1", usage: { input_tokens: 2, output_tokens: 5193, output_tokens_details: { thinking_tokens: 4273 }, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } },
+    { type: "assistant", message: { id: "msg_1", usage: { input_tokens: 2, output_tokens: 5193, output_tokens_details: { thinking_tokens: 4273 }, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } },
+    { type: "assistant", message: { id: "msg_2", usage: { input_tokens: 2, output_tokens: 89, output_tokens_details: { thinking_tokens: 18 }, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } },
+  ]);
+
+  const totals = aggregateTranscriptUsage(file);
+  assert.equal(totals.thinking_tokens, 4291);
+  assert.equal(totals.output_tokens, 5282);
 
   fs.unlinkSync(file);
 });
@@ -58,6 +73,7 @@ test("aggregateTranscriptUsage degrades to zeros for a missing file", () => {
     output_tokens: 0,
     cache_read_input_tokens: 0,
     cache_creation_input_tokens: 0,
+    thinking_tokens: 0,
   });
 });
 
@@ -87,18 +103,26 @@ test("renderCwd returns null when the cwd field is hidden", () => {
 
 test("renderUsageLine uses abbreviated lowercase field labels", () => {
   const file = writeTempTranscript([
-    { type: "assistant", message: { id: "msg_1", usage: { input_tokens: 36, output_tokens: 21100, cache_read_input_tokens: 1200000, cache_creation_input_tokens: 15300 } } },
+    { type: "assistant", message: { id: "msg_1", usage: { input_tokens: 36, output_tokens: 21100, output_tokens_details: { thinking_tokens: 5000 }, cache_read_input_tokens: 1200000, cache_creation_input_tokens: 15300 } } },
   ]);
   assert.equal(
     renderUsageLine({ transcript_path: file }),
-    "in 36 out 21.1k cr 1.2M cw 15.3k tot 1.2M",
+    "in 36 out 21.1k th 5.0k cr 1.2M cw 15.3k tot 1.2M",
   );
+  fs.unlinkSync(file);
+});
+
+test("renderUsageLine shows th 0 when there's no thinking usage, like other zero fields", () => {
+  const file = writeTempTranscript([
+    { type: "assistant", message: { id: "msg_1", usage: { input_tokens: 36, output_tokens: 100, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } },
+  ]);
+  assert.equal(renderUsageLine({ transcript_path: file }), "in 36 out 100 th 0 cr 0 cw 0 tot 136");
   fs.unlinkSync(file);
 });
 
 test("resolveVisibleFields defaults to all fields with no flags", () => {
   const visible = resolveVisibleFields([]);
-  assert.deepEqual([...visible].sort(), ["cr", "ctx", "cw", "cwd", "in", "out", "tot", "wk"]);
+  assert.deepEqual([...visible].sort(), ["cr", "ctx", "cw", "cwd", "in", "out", "th", "tot", "wk"]);
 });
 
 test("resolveVisibleFields --hide removes only the listed fields", () => {

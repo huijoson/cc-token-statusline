@@ -5,7 +5,7 @@ A portable [Claude Code](https://code.claude.com) `statusLine` command: context 
 Zero npm dependencies. Reads Claude Code's `statusLine` JSON on stdin, writes one line to stdout, exits. No files written, no network calls, no hooks.
 
 ```
-ctx 8% | wk 83% left (resets 08/26) | doitservers | in 36 out 21.1k cr 1.2M cw 15.3k tot 1.3M
+ctx 8% | wk 83% left (resets 08/26) | doitservers | in 36 out 21.1k th 5.0k cr 1.2M cw 15.3k tot 1.3M
 ```
 
 ## Install
@@ -29,6 +29,7 @@ That's it — `npx` fetches and caches the package on first run. No local clone,
 - `wk N% left (resets MM/DD)` — remaining weekly usage for Claude.ai Pro/Max plans (`rate_limits.seven_day`). Shows `wk n/a` for API-key/Bedrock/Vertex auth, where this isn't populated.
 - `<dirname>` — basename of the current working directory (`data.cwd`), reflecting the live shell cwd (including `/add-dir` overrides).
 - `in` / `out` — cumulative input/output tokens for this conversation, summed across every turn in the session transcript.
+- `th` — cumulative extended-thinking tokens (`usage.output_tokens_details.thinking_tokens`). This is a **breakdown of `out`, not additional to it** — it's not folded into `tot`.
 - `cr` — cumulative tokens served from cache across the conversation (cost savings from caching, not "how much is cached right now").
 - `cw` — cumulative tokens written to cache across the conversation.
 - `tot` — sum of `in` + `out` + `cr` + `cw`.
@@ -39,7 +40,7 @@ Turn-level `usage` entries are de-duplicated by `message.id` before summing, sin
 
 Pass `--show=` and/or `--hide=` (comma-separated field keys) in the `command` string. `--show` whitelists which fields can appear; `--hide` then removes fields from whatever's currently visible (default: everything). Unknown keys are ignored.
 
-Field keys: `ctx`, `wk`, `cwd`, `in`, `out`, `cr`, `cw`, `tot`.
+Field keys: `ctx`, `wk`, `cwd`, `in`, `out`, `th`, `cr`, `cw`, `tot`.
 
 ```json
 {
