@@ -1,11 +1,11 @@
 # cc-token-statusline
 
-A portable [Claude Code](https://code.claude.com) `statusLine` command: context window %, weekly rate-limit remaining, and this conversation's cumulative input / output / cache token usage — in one line.
+A portable [Claude Code](https://code.claude.com) `statusLine` command: context window %, weekly rate-limit remaining, current directory, and this conversation's cumulative input / output / cache token usage — in one line.
 
 Zero npm dependencies. Reads Claude Code's `statusLine` JSON on stdin, writes one line to stdout, exits. No files written, no network calls, no hooks.
 
 ```
-[CONTEXT] 8% | Wk 83% left (resets 08/26) | In 36 Out 21.1k CacheRead 1.2M CacheWrite 15.3k Total 1.3M
+ctx 8% | wk 83% left (resets 08/26) | doitservers | in 36 out 21.1k cr 1.2M cw 15.3k tot 1.3M
 ```
 
 ## Install
@@ -25,14 +25,35 @@ That's it — `npx` fetches and caches the package on first run. No local clone,
 
 ## What each field means
 
-- `[CONTEXT] N%` — how full the current context window is (`context_window.used_percentage` from the statusLine payload).
-- `Wk N% left (resets MM/DD)` — remaining weekly usage for Claude.ai Pro/Max plans (`rate_limits.seven_day`). Shows `Wk n/a` for API-key/Bedrock/Vertex auth, where this isn't populated.
-- `In` / `Out` — cumulative input/output tokens for this conversation, summed across every turn in the session transcript.
-- `CacheRead` — cumulative tokens served from cache across the conversation (cost savings from caching, not "how much is cached right now").
-- `CacheWrite` — cumulative tokens written to cache across the conversation.
-- `Total` — sum of the four numbers above.
+- `ctx N%` — how full the current context window is (`context_window.used_percentage` from the statusLine payload).
+- `wk N% left (resets MM/DD)` — remaining weekly usage for Claude.ai Pro/Max plans (`rate_limits.seven_day`). Shows `wk n/a` for API-key/Bedrock/Vertex auth, where this isn't populated.
+- `<dirname>` — basename of the current working directory (`data.cwd`), reflecting the live shell cwd (including `/add-dir` overrides).
+- `in` / `out` — cumulative input/output tokens for this conversation, summed across every turn in the session transcript.
+- `cr` — cumulative tokens served from cache across the conversation (cost savings from caching, not "how much is cached right now").
+- `cw` — cumulative tokens written to cache across the conversation.
+- `tot` — sum of `in` + `out` + `cr` + `cw`.
 
 Turn-level `usage` entries are de-duplicated by `message.id` before summing, since Claude Code can write more than one JSONL line per API response.
+
+## Showing/hiding fields
+
+Pass `--show=` and/or `--hide=` (comma-separated field keys) in the `command` string. `--show` whitelists which fields can appear; `--hide` then removes fields from whatever's currently visible (default: everything). Unknown keys are ignored.
+
+Field keys: `ctx`, `wk`, `cwd`, `in`, `out`, `cr`, `cw`, `tot`.
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y cc-token-statusline --hide=cr,cw"
+  }
+}
+```
+
+```sh
+node bin/statusline.js --hide=cr,cw < payload.json   # drop cache fields
+node bin/statusline.js --show=ctx,wk < payload.json  # only context % and weekly limit
+```
 
 ## Scope
 

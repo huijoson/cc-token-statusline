@@ -9,8 +9,11 @@ const path = require("node:path");
 const {
   formatTokens,
   aggregateTranscriptUsage,
+  resolveVisibleFields,
   renderContext,
   renderWeeklyLimit,
+  renderCwd,
+  renderUsageLine,
   render,
 } = require("../bin/statusline.js");
 
@@ -67,8 +70,62 @@ test("renderWeeklyLimit falls back to n/a without rate_limits.seven_day", () => 
   assert.match(renderWeeklyLimit({}), /n\/a/);
   assert.match(
     renderWeeklyLimit({ rate_limits: { seven_day: { used_percentage: 17, resets_at: 1787706000 } } }),
-    /Wk 83% left/,
+    /wk 83% left/,
   );
+});
+
+test("renderCwd shows the basename of data.cwd", () => {
+  assert.equal(renderCwd({ cwd: "/Users/yuhan/coding/doitservers" }), "doitservers");
+  assert.equal(renderCwd({}), null);
+  assert.equal(renderCwd({ cwd: "/" }), "/");
+});
+
+test("renderCwd returns null when the cwd field is hidden", () => {
+  const visible = resolveVisibleFields(["--hide=cwd"]);
+  assert.equal(renderCwd({ cwd: "/Users/yuhan/coding/doitservers" }, visible), null);
+});
+
+test("renderUsageLine uses abbreviated lowercase field labels", () => {
+  const file = writeTempTranscript([
+    { type: "assistant", message: { id: "msg_1", usage: { input_tokens: 36, output_tokens: 21100, cache_read_input_tokens: 1200000, cache_creation_input_tokens: 15300 } } },
+  ]);
+  assert.equal(
+    renderUsageLine({ transcript_path: file }),
+    "in 36 out 21.1k cr 1.2M cw 15.3k tot 1.2M",
+  );
+  fs.unlinkSync(file);
+});
+
+test("resolveVisibleFields defaults to all fields with no flags", () => {
+  const visible = resolveVisibleFields([]);
+  assert.deepEqual([...visible].sort(), ["cr", "ctx", "cw", "cwd", "in", "out", "tot", "wk"]);
+});
+
+test("resolveVisibleFields --hide removes only the listed fields", () => {
+  const visible = resolveVisibleFields(["--hide=cr,cw"]);
+  assert.equal(visible.has("cr"), false);
+  assert.equal(visible.has("cw"), false);
+  assert.equal(visible.has("in"), true);
+  assert.equal(visible.has("ctx"), true);
+});
+
+test("resolveVisibleFields --show whitelists fields, ignoring unknown keys", () => {
+  const visible = resolveVisibleFields(["--show=ctx,wk,bogus"]);
+  assert.deepEqual([...visible].sort(), ["ctx", "wk"]);
+});
+
+test("resolveVisibleFields applies --hide after --show", () => {
+  const visible = resolveVisibleFields(["--show=ctx,wk,tot", "--hide=wk"]);
+  assert.deepEqual([...visible].sort(), ["ctx", "tot"]);
+});
+
+test("render() omits hidden segments without leaving stray separators", () => {
+  const line = render(
+    { context_window: { used_percentage: 8 }, cwd: "/x/doitservers" },
+    resolveVisibleFields(["--show=ctx,cwd"]),
+  );
+  assert.equal(line, `${"\x1b[32m"}ctx${"\x1b[0m"} 8% | doitservers`);
+  assert.equal(line.includes("||"), false);
 });
 
 test("render() never throws on garbage input and always returns one line", () => {
