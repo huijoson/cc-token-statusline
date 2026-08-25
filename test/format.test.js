@@ -31,9 +31,9 @@ test("an unknown Field is printed literally so a typo is visible", () => {
 });
 
 test("a syntax error replaces the whole line, because stderr is never seen", () => {
-  assert.equal(renderFormat("ctx {ctx}|[oops", resolver({ ctx: "8%" })), "agentline: unclosed [ at column 11");
-  assert.equal(renderFormat("{ctx", resolver({})), "agentline: unclosed { at column 1");
-  assert.equal(renderFormat("a]b", resolver({})), "agentline: unmatched ] at column 2");
+  assert.equal(renderFormat("ctx {ctx}|[oops", resolver({ ctx: "8%" })), "agenthud: unclosed [ at column 11");
+  assert.equal(renderFormat("{ctx", resolver({})), "agenthud: unclosed { at column 1");
+  assert.equal(renderFormat("a]b", resolver({})), "agenthud: unmatched ] at column 2");
 });
 
 test("escapes produce literal delimiters", () => {

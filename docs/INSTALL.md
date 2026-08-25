@@ -1,4 +1,4 @@
-# Installing agentline
+# Installing agenthud
 
 A status line for agent CLIs. This is the full manual — for the short version,
 see the [README](../README.md).
@@ -6,8 +6,8 @@ see the [README](../README.md).
 ## Before you start
 
 - **Node.js 18 or newer.** `node --version` to check. That is the only
-  prerequisite; agentline has no npm dependencies.
-- **The CLI you are configuring must run in the same environment as agentline.**
+  prerequisite; agenthud has no npm dependencies.
+- **The CLI you are configuring must run in the same environment as agenthud.**
   On WSL this matters: a native Linux Claude Code cannot run a Windows `node.exe`,
   and vice versa. Whichever shell your CLI launches from is the one that must
   find `node`.
@@ -19,7 +19,7 @@ see the [README](../README.md).
 Nothing to install. The command in your CLI's settings does the work:
 
 ```
-npx -y agentline
+npx -y agenthud
 ```
 
 `npx` downloads and caches the package the first time, so it needs network once.
@@ -30,21 +30,21 @@ Every later run is served from cache.
 Slightly faster to start, and works offline from the first run:
 
 ```sh
-npm install -g agentline
+npm install -g agenthud
 ```
 
-Then use `agentline` in place of `npx -y agentline` everywhere below.
+Then use `agenthud` on its own wherever this manual says `npx -y agenthud`.
 
 ## The quick path
 
 ```sh
-npx -y agentline init
+npx -y agenthud init
 ```
 
 Pick your CLI, pick a starting line, edit it, confirm the diff. Done.
 
 **Run this in a plain terminal, not inside the CLI you are configuring.** A
-full-screen editor inside another full-screen editor cannot work; agentline
+full-screen editor inside another full-screen editor cannot work; agenthud
 detects that and falls back to a plain typed flow, but you lose the arrow-key
 editor.
 
@@ -77,7 +77,7 @@ settings file.
 {
   "statusLine": {
     "type": "command",
-    "command": "npx -y agentline"
+    "command": "npx -y agenthud"
   }
 }
 ```
@@ -93,7 +93,7 @@ settings file.
 {
   "statusLine": {
     "type": "command",
-    "command": "npx -y agentline --host=copilot-cli"
+    "command": "npx -y agenthud --host=copilot-cli"
   }
 }
 ```
@@ -119,7 +119,7 @@ copilot --experimental
 {
   "statusLine": {
     "type": "command",
-    "command": "npx -y agentline --host=antigravity"
+    "command": "npx -y agenthud --host=antigravity"
   }
 }
 ```
@@ -141,7 +141,7 @@ Note the extra nesting under `ui`:
   "ui": {
     "statusLine": {
       "type": "command",
-      "command": "npx -y agentline --host=qwen-code"
+      "command": "npx -y agenthud --host=qwen-code"
     }
   }
 }
@@ -149,14 +149,14 @@ Note the extra nesting under `ui`:
 
 ### CLIs that are not supported
 
-**Codex CLI and opencode cannot run agentline at all.** Both build their status
+**Codex CLI and opencode cannot run agenthud at all.** Both build their status
 lines from a fixed list of built-in items and never run an external command.
 This is not something a future release here can fix
 ([openai/codex#17827](https://github.com/openai/codex/issues/17827),
 [anomalyco/opencode#30295](https://github.com/anomalyco/opencode/issues/30295)).
 
 **Cursor CLI and Factory Droid** have the mechanism, but their payloads have not
-been sampled yet, so agentline cannot read their data correctly. They appear in
+been sampled yet, so agenthud cannot read their data correctly. They appear in
 `init` marked as not yet supported.
 
 Restart your CLI after editing its settings.
@@ -164,20 +164,20 @@ Restart your CLI after editing its settings.
 ## Choosing what the line shows
 
 ```sh
-npx -y agentline --list-fields
+npx -y agenthud --list-fields
 ```
 
 prints every field with a live sample value, what it means, and what your CLI
 cannot supply. Add `--host=…` to see it for a different CLI.
 
-To change the line, either run `npx -y agentline edit`, or write a Format
+To change the line, either run `npx -y agenthud edit`, or write a Format
 yourself:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "npx -y agentline --format=\"{model}[:{effort}]|ctx {ctx}|{branch}|{cwd}\""
+    "command": "npx -y agenthud --format=\"{model}[:{effort}]|ctx {ctx}|{branch}|{cwd}\""
   }
 }
 ```
@@ -189,10 +189,10 @@ If the quoting fights you — most likely on Windows — use the environment
 instead:
 
 ```
-AGENTLINE_FORMAT={model}|ctx {ctx}|{cwd}
+AGENTHUD_FORMAT={model}|ctx {ctx}|{cwd}
 ```
 
-Precedence is `--format` › `--show`/`--hide` › `AGENTLINE_FORMAT` › the default.
+Precedence is `--format` › `--show`/`--hide` › `AGENTHUD_FORMAT` › the default.
 
 ## Checking it works
 
@@ -200,7 +200,7 @@ Before wiring it into a CLI, feed it a payload by hand:
 
 ```sh
 echo '{"model":{"display_name":"Opus 5"},"context_window":{"used_percentage":8},"cwd":"/tmp/demo"}' \
-  | npx -y agentline --no-color
+  | npx -y agenthud --no-color
 ```
 
 Expected — the quota and token segments disappear because this hand-made
@@ -213,7 +213,7 @@ Opus 5 | ctx 8% | demo
 And to see what your CLI is actually running:
 
 ```sh
-npx -y agentline --print-format
+npx -y agenthud --print-format
 ```
 
 ## Troubleshooting
@@ -221,9 +221,9 @@ npx -y agentline --print-format
 **The status line is blank.**
 Usually shell quoting: an unquoted `|` in `--format` splits the command into a
 pipeline. Check with `--print-format`, or move the Format into
-`AGENTLINE_FORMAT`.
+`AGENTHUD_FORMAT`.
 
-**It says `agentline: unclosed [ at column 23`.**
+**It says `agenthud: unclosed [ at column 23`.**
 That is the intended behaviour, not a crash. Errors are printed into the status
 line because nothing else you write to stderr is ever displayed. Fix the column
 it names.
@@ -257,27 +257,27 @@ launches from. A Windows `node.exe` cannot be executed from a Linux process.
 
 ## Upgrading
 
-With `npx -y agentline`, you get the latest version automatically. Your Format
+With `npx -y agenthud`, you get the latest version automatically. Your Format
 is stored expanded in your settings file, so **your line never changes under
 you** when the package updates.
 
-Installed globally: `npm update -g agentline`.
+Installed globally: `npm update -g agenthud`.
 
 ## Uninstalling
 
 Delete the `statusLine` key from your CLI's settings file and restart it. If you
-installed globally, `npm uninstall -g agentline`.
+installed globally, `npm uninstall -g agenthud`.
 
-agentline writes nothing else: no state files, no hooks, no network calls beyond
+agenthud writes nothing else: no state files, no hooks, no network calls beyond
 `npx` fetching the package. The only file it ever touches is the settings file
 you point it at, and only after showing you the diff.
 
 ## Coming from cc-token-statusline
 
-`agentline` is the same project renamed. Your existing `--show` and `--hide`
+`agenthud` is the same project renamed. Your existing `--show` and `--hide`
 flags still work unchanged — they now compile down to a Format internally.
 
-Replace `npx -y cc-token-statusline` with `npx -y agentline` in your settings and
+Replace `npx -y cc-token-statusline` with `npx -y agenthud` in your settings and
 restart. Two behaviour changes to expect:
 
 - the default line now starts with the model name and effort level

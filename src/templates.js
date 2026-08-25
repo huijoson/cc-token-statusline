@@ -6,7 +6,7 @@ const { getField, GROUP_ORDER, FIELD_KEYS } = require("./fields.js");
 // than variations on one line. There is deliberately no "everything" template:
 // the line it produces is wider than a terminal and reads as a recommendation,
 // and the need it appears to serve — "what fields exist?" — is documentation's
-// job (`agentline --list-fields`), not a template's.
+// job (`agenthud --list-fields`), not a template's.
 const TEMPLATES = [
   {
     name: "default",

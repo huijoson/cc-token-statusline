@@ -43,7 +43,7 @@ function formatFromShowHide(argv) {
 function resolveFormat(argv, env) {
   return flag(argv, "format")
     ?? formatFromShowHide(argv)
-    ?? env.AGENTLINE_FORMAT
+    ?? env.AGENTHUD_FORMAT
     ?? DEFAULT_FORMAT;
 }
 
@@ -85,7 +85,7 @@ function main(argv, env) {
 
   const host = getHost(flag(argv, "host") ?? "claude-code");
   if (!host || !host.supported) {
-    process.stdout.write(`agentline: unknown host ${flag(argv, "host")}\n`);
+    process.stdout.write(`agenthud: unknown host ${flag(argv, "host")}\n`);
     return;
   }
 
@@ -118,7 +118,7 @@ function main(argv, env) {
     }
   }
   if (fault) {
-    process.stdout.write(`agentline: ${fault}\n`);
+    process.stdout.write(`agenthud: ${fault}\n`);
     return;
   }
 

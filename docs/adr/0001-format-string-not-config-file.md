@@ -13,7 +13,7 @@ under what labels. Three shapes were considered.
 
 1. **Flags** — keep `--show` / `--hide`, add ordering and a separator flag.
 2. **A Format string** — `--format="ctx {ctx} | {model}"`, one CLI argument.
-3. **A config file** — `~/.agentline.json`, a Segment array with per-Segment
+3. **A config file** — `~/.agenthud.json`, a Segment array with per-Segment
    labels, colours and thresholds.
 
 The decision is easy to mistake for reversible. It is not: whichever shape is

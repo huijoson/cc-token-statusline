@@ -18,7 +18,7 @@ const BOLD = "\x1b[1m";
 const RESET = "\x1b[0m";
 
 // Three capability levels, decided once at startup. The middle one exists
-// because of a specific, predictable situation: someone runs `agentline edit`
+// because of a specific, predictable situation: someone runs `agenthud edit`
 // from inside the agent CLI they are configuring, which is a TUI already, and
 // a raw-mode editor inside another TUI produces garbage or silence.
 function capability(argv, env) {
@@ -283,7 +283,7 @@ async function run(command, argv, env) {
 
   if (mode === "print") {
     process.stdout.write(
-      `\n  ${BOLD}agentline${RESET} ${DIM}— this terminal is not interactive` +
+      `\n  ${BOLD}agenthud${RESET} ${DIM}— this terminal is not interactive` +
       ` (run it in a plain shell for the editor)${RESET}\n\n` +
       TEMPLATES.map((template) =>
         `  ${BOLD}${template.name}${RESET}\n    ${renderFormat(template.format, resolver)}\n` +

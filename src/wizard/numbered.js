@@ -8,7 +8,7 @@ const DIM = "\x1b[2m";
 const RESET = "\x1b[0m";
 
 // The fallback for terminals where raw mode is unavailable — including the one
-// that matters most in practice: a user running `agentline edit` from inside an
+// that matters most in practice: a user running `agenthud edit` from inside an
 // agent CLI, which is a TUI already. Typing an order is not a downgrade of
 // selection-plus-reorder; it *is* selection and order in one input.
 function fieldTable(host, resolver) {
