@@ -19,15 +19,23 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "prepublishOnly": "node --test"
   },
   "keywords": [
     "statusline",
     "status-line",
     "claude-code",
+    "copilot-cli",
+    "antigravity",
     "qwen-code",
+    "codex",
     "agent",
     "cli",
     "tui"
-  ]
+  ],
+  "homepage": "https://github.com/huijoson/cc-token-statusline#readme",
+  "bugs": {
+    "url": "https://github.com/huijoson/cc-token-statusline/issues"
+  }
 }
