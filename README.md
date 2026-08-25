@@ -1,4 +1,4 @@
-# agenthud
+# hudline
 
 Design your own agent-CLI status line. One Format string, several CLIs, zero npm
 dependencies.
@@ -16,7 +16,7 @@ network calls, no hooks, no state files.
 ## Quick start
 
 ```sh
-npx -y agenthud init     # pick a starting line, edit it, install it
+npx -y hudline init     # pick a starting line, edit it, install it
 ```
 
 Run it in a **plain shell**, not inside the CLI you are configuring — a
@@ -29,7 +29,7 @@ Or install by hand:
 {
   "statusLine": {
     "type": "command",
-    "command": "npx -y agenthud"
+    "command": "npx -y hudline"
   }
 }
 ```
@@ -82,7 +82,7 @@ enclosing group, it removes its whole segment. Surviving segments collapse
 their internal whitespace and are joined by `--sep` (default `" | "`).
 
 ```sh
-agenthud --format="{model}[:{effort}]|ctx {ctx}|7d {7d} left[ (resets {7d_reset})]|{cwd}"
+hudline --format="{model}[:{effort}]|ctx {ctx}|7d {7d} left[ (resets {7d_reset})]|{cwd}"
 ```
 
 - no effort level on this model → `Opus 5` , not `Opus 5:`
@@ -94,7 +94,7 @@ which reports no quotas, the same string prints `Qwen3-Coder | ctx 12% | myproj`
 
 ## Fields
 
-`agenthud --list-fields` prints this table with live sample values and marks
+`hudline --list-fields` prints this table with live sample values and marks
 what your CLI cannot supply. Add `--host=qwen-code` to see it for another CLI.
 
 | field | means |
@@ -151,7 +151,7 @@ Other notes worth knowing:
 | | |
 |---|---|
 | `--format=…` | the Format. Quote it — an unquoted `\|` is a shell pipe |
-| `AGENTHUD_FORMAT` | same thing via the environment, for awkward quoting |
+| `HUDLINE_FORMAT` | same thing via the environment, for awkward quoting |
 | `--sep=…` | segment separator, default `" \| "` |
 | `--host=…` | `claude-code` (default) or `qwen-code` |
 | `--show=` / `--hide=` | shorthand that compiles to a Format |
@@ -164,12 +164,12 @@ Colours are threshold colours and belong to the field, not the Format: `ctx`
 turns yellow at 75% and red at 82%, quota fields turn yellow below 50% and red
 below 20%. Literal text you write is never coloured.
 
-Precedence: `--format` › `--show`/`--hide` › `AGENTHUD_FORMAT` › default.
+Precedence: `--format` › `--show`/`--hide` › `HUDLINE_FORMAT` › default.
 
 ## Editing an existing line
 
 ```sh
-npx -y agenthud edit
+npx -y hudline edit
 ```
 
 Reads the Format back out of your CLI's settings and drops you into the editor
@@ -200,7 +200,7 @@ Windows, manual installation, verification, troubleshooting, and migrating from
 
 ```sh
 npm test
-echo '{"model":{"display_name":"Opus 5"}}' | node bin/agenthud.js --no-color
+echo '{"model":{"display_name":"Opus 5"}}' | node bin/hudline.js --no-color
 ```
 
 `CONTEXT.md` is the glossary; `docs/adr/` records the decisions that are hard to

@@ -1,5 +1,5 @@
 {
-  "name": "agenthud",
+  "name": "hudline",
   "version": "0.3.0",
   "description": "Design your own agent CLI status line. One Format string, many CLIs. Zero dependencies.",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "url": "git+https://github.com/huijoson/cc-token-statusline.git"
   },
   "bin": {
-    "agenthud": "bin/agenthud.js"
+    "hudline": "bin/hudline.js"
   },
   "files": [
     "bin",

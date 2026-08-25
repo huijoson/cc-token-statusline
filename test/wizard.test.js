@@ -71,7 +71,7 @@ test("out-of-range and junk entries are ignored rather than aborting", () => {
 });
 
 test("a settings file with comments is never rewritten", () => {
-  const file = path.join(os.tmpdir(), `agenthud-settings-${Date.now()}.json`);
+  const file = path.join(os.tmpdir(), `hudline-settings-${Date.now()}.json`);
   fs.writeFileSync(file, '{\n  // keep me\n  "model": "opus"\n}\n');
   const settings = install.readSettings(file);
   assert.equal(settings.writable, false);
@@ -85,7 +85,7 @@ test("a URL in a string is not mistaken for a comment", () => {
 
 test("only the statusLine key changes, and the file's indentation is kept", () => {
   const before = '{\n    "model": "opus",\n    "theme": "dark"\n}\n';
-  const file = path.join(os.tmpdir(), `agenthud-settings-${Date.now()}-b.json`);
+  const file = path.join(os.tmpdir(), `hudline-settings-${Date.now()}-b.json`);
   fs.writeFileSync(file, before);
   const settings = install.readSettings(file);
   assert.equal(settings.indent, 4);
@@ -135,20 +135,20 @@ const { parseFormatFromCommand, capability } = require("../src/wizard/index.js")
 const { decodeAll } = require("../src/wizard/keys.js");
 
 test("a checkout invokes itself by path; an npm install goes through npx", () => {
-  assert.match(install.commandFor(claudeCode, "x", "agenthud", "node /tmp/a.js"), /^node \/tmp\/a\.js --format=/);
-  assert.match(install.commandFor(require("../src/hosts/qwen-code.js"), "x", "agenthud", "npx -y agenthud"),
-    /^npx -y agenthud --host=qwen-code --format=/);
+  assert.match(install.commandFor(claudeCode, "x", "hudline", "node /tmp/a.js"), /^node \/tmp\/a\.js --format=/);
+  assert.match(install.commandFor(require("../src/hosts/qwen-code.js"), "x", "hudline", "npx -y hudline"),
+    /^npx -y hudline --host=qwen-code --format=/);
   // This checkout is not inside node_modules, so it must not emit npx.
-  assert.match(install.launcherFor(), /^node .*bin[/\\]agenthud\.js$/);
+  assert.match(install.launcherFor(), /^node .*bin[/\\]hudline\.js$/);
 });
 
 test("edit reads the Format back out of the installed command", () => {
   const format = '{model}[:{effort}]|ctx {ctx}|a "quoted" b';
   const command = install.commandFor(claudeCode, format);
   assert.equal(parseFormatFromCommand(command), format);
-  assert.equal(parseFormatFromCommand("npx -y agenthud --format='ctx {ctx}'"), "ctx {ctx}");
-  assert.equal(parseFormatFromCommand("npx -y agenthud --format=ctx"), "ctx");
-  assert.equal(parseFormatFromCommand("npx -y agenthud"), null);
+  assert.equal(parseFormatFromCommand("npx -y hudline --format='ctx {ctx}'"), "ctx {ctx}");
+  assert.equal(parseFormatFromCommand("npx -y hudline --format=ctx"), "ctx");
+  assert.equal(parseFormatFromCommand("npx -y hudline"), null);
 });
 
 test("a batched read is decoded into every keystroke it carried", () => {

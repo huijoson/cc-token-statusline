@@ -139,16 +139,16 @@ function write(file, text) {
 }
 
 // Where this copy is running from decides how the Host should invoke it.
-// Installed from npm, `npx -y agenthud` is right. Run out of a git checkout —
+// Installed from npm, `npx -y hudline` is right. Run out of a git checkout —
 // which is the only way to run it before it is published — `npx` would fetch a
 // different package or fail outright, so the command has to point at this file.
-function launcherFor(packageName = "agenthud") {
-  const entry = require.resolve("../../bin/agenthud.js");
+function launcherFor(packageName = "hudline") {
+  const entry = require.resolve("../../bin/hudline.js");
   if (entry.includes(`${path.sep}node_modules${path.sep}`)) return `npx -y ${packageName}`;
   return `node ${entry}`;
 }
 
-function commandFor(host, format, packageName = "agenthud", launcher = launcherFor(packageName)) {
+function commandFor(host, format, packageName = "hudline", launcher = launcherFor(packageName)) {
   const hostFlag = host.id === "claude-code" ? "" : ` --host=${host.id}`;
   return `${launcher}${hostFlag} --format=${JSON.stringify(format)}`;
 }

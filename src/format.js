@@ -134,7 +134,7 @@ function renderFormat(source, resolver, options = {}) {
   try {
     segments = parseFormat(source);
   } catch (error) {
-    if (error instanceof FormatError) return `agenthud: ${error.message}`;
+    if (error instanceof FormatError) return `hudline: ${error.message}`;
     throw error;
   }
 

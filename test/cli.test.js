@@ -5,10 +5,10 @@ const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 
-const { resolveFormat, formatFromShowHide } = require("../bin/agenthud.js");
+const { resolveFormat, formatFromShowHide } = require("../bin/hudline.js");
 const { DEFAULT_FORMAT } = require("../src/templates.js");
 
-const BIN = path.join(__dirname, "..", "bin", "agenthud.js");
+const BIN = path.join(__dirname, "..", "bin", "hudline.js");
 const PAYLOAD = JSON.stringify({
   model: { display_name: "Opus 5" },
   effort: { level: "high" },
@@ -21,9 +21,9 @@ const run = (args) =>
   execFileSync(process.execPath, [BIN, ...args], { input: PAYLOAD, encoding: "utf8" }).trim();
 
 test("--format wins over --show, which wins over the environment", () => {
-  assert.equal(resolveFormat(["--format=X", "--show=ctx"], { AGENTHUD_FORMAT: "Y" }), "X");
-  assert.equal(resolveFormat(["--show=ctx"], { AGENTHUD_FORMAT: "Y" }), "ctx {ctx}");
-  assert.equal(resolveFormat([], { AGENTHUD_FORMAT: "Y" }), "Y");
+  assert.equal(resolveFormat(["--format=X", "--show=ctx"], { HUDLINE_FORMAT: "Y" }), "X");
+  assert.equal(resolveFormat(["--show=ctx"], { HUDLINE_FORMAT: "Y" }), "ctx {ctx}");
+  assert.equal(resolveFormat([], { HUDLINE_FORMAT: "Y" }), "Y");
   assert.equal(resolveFormat([], {}), DEFAULT_FORMAT);
 });
 
@@ -55,10 +55,10 @@ test("empty stdin is normal; stdin that is not JSON is reported in the line", ()
   assert.equal(empty, "");
 
   const junk = execFileSync(process.execPath, [BIN, "--no-color"], { input: "not json", encoding: "utf8" }).trim();
-  assert.equal(junk, "agenthud: payload is not valid JSON");
+  assert.equal(junk, "hudline: payload is not valid JSON");
 
   const array = execFileSync(process.execPath, [BIN, "--no-color"], { input: "[1,2]", encoding: "utf8" }).trim();
-  assert.equal(array, "agenthud: payload is not an object");
+  assert.equal(array, "hudline: payload is not an object");
 });
 
 test("--print-format explains which Format is actually in effect", () => {

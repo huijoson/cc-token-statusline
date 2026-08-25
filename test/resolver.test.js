@@ -13,7 +13,7 @@ const qwenCode = require("../src/hosts/qwen-code.js");
 const { sumUsageLines } = require("../src/transcript.js");
 
 function writeTranscript(lines) {
-  const file = path.join(os.tmpdir(), `agenthud-${Date.now()}-${Math.random()}.jsonl`);
+  const file = path.join(os.tmpdir(), `hudline-${Date.now()}-${Math.random()}.jsonl`);
   fs.writeFileSync(file, lines.map((line) => JSON.stringify(line)).join("\n") + "\n");
   return file;
 }

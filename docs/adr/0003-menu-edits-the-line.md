@@ -38,7 +38,7 @@ primary use case, not an edge case. Overflow scrolls horizontally by whole
 Segments; it never wraps, since a wrapped preview would misrepresent a
 one-line product.
 
-A fallback remains necessary and is not wasted work. Running `agenthud edit`
+A fallback remains necessary and is not wasted work. Running `hudline edit`
 from inside the agent CLI being configured — the most natural thing for a user
 to try — puts a raw-mode TUI inside another TUI. That case is detected and
 degrades to typing an ordered list of numbers, which is not a lesser form of
