@@ -1,6 +1,6 @@
 {
   "name": "cc-token-statusline",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Portable Claude Code statusLine: context %, weekly rate-limit remaining, and per-conversation token usage. Zero dependencies, no state files, no hooks.",
   "license": "MIT",
   "author": "Lawrence (huijoson)",
