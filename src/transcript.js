@@ -63,13 +63,18 @@ function emptyTotals() {
   return totals;
 }
 
+// Returns null when there is no transcript to read, and zeros when there is one
+// that happens to contain no usage yet. Those are different facts: a
+// conversation that has genuinely used 0 tokens should print `in 0`, while a
+// Payload that carries no transcript at all has nothing to say and its token
+// Fields are Missing.
 function readClaudeTranscript(transcriptPath) {
-  if (!transcriptPath || typeof transcriptPath !== "string") return emptyTotals();
+  if (!transcriptPath || typeof transcriptPath !== "string") return null;
   let raw;
   try {
     raw = fs.readFileSync(transcriptPath, "utf8");
   } catch {
-    return emptyTotals();
+    return null;
   }
   return sumUsageLines(raw);
 }

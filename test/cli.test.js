@@ -35,9 +35,11 @@ test("--show/--hide are sugar that compiles to a Format", () => {
 });
 
 test("the default line renders end to end", () => {
+  // This payload names no transcript, so the token segment has nothing to
+  // report and disappears rather than claiming zero.
   assert.equal(
     run(["--no-color"]),
-    "Opus 5:high | ctx 8% | 7d 83% left (resets 08/27) | doitservers | in 0 out 0 th 0 cr 0 cw 0 tot 0"
+    "Opus 5:high | ctx 8% | 7d 83% left (resets 08/27) | doitservers"
   );
 });
 
@@ -48,9 +50,15 @@ test("NO_COLOR is honoured, since this output gets piped elsewhere", () => {
   assert.equal(out, "Opus 5 | ctx 8%");
 });
 
-test("a malformed payload degrades instead of crashing", () => {
-  const out = execFileSync(process.execPath, [BIN, "--no-color"], { input: "not json", encoding: "utf8" }).trim();
-  assert.equal(out, "in 0 out 0 th 0 cr 0 cw 0 tot 0");
+test("empty stdin is normal; stdin that is not JSON is reported in the line", () => {
+  const empty = execFileSync(process.execPath, [BIN, "--no-color"], { input: "", encoding: "utf8" }).trim();
+  assert.equal(empty, "");
+
+  const junk = execFileSync(process.execPath, [BIN, "--no-color"], { input: "not json", encoding: "utf8" }).trim();
+  assert.equal(junk, "agentline: payload is not valid JSON");
+
+  const array = execFileSync(process.execPath, [BIN, "--no-color"], { input: "[1,2]", encoding: "utf8" }).trim();
+  assert.equal(array, "agentline: payload is not an object");
 });
 
 test("--print-format explains which Format is actually in effect", () => {

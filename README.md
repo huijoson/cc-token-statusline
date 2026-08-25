@@ -141,7 +141,9 @@ Other notes worth knowing:
   occupancy, not a running total), while Copilot CLI puts conversation totals
   in the payload. The transcript is only read when your Format mentions a token
   field, and never on a CLI that does not need it.
-- `0` is a value, not absence. If you do not want `th 0`, leave `{th}` out.
+- `0` is a value, not absence: a conversation that has really used 0 tokens
+  shows `in 0`. A payload with no transcript to read shows nothing at all —
+  those are different facts. If you do not want `th 0`, leave `{th}` out.
 - `wk` still works as an alias for `7d`.
 
 ## Options
@@ -187,6 +189,12 @@ your CLI will print.
 Before writing anything it takes a backup, shows you a diff, and asks. It only
 ever touches the `statusLine` key. If your settings file contains comments it
 will not rewrite it at all — it prints the snippet for you to paste.
+
+## Full manual
+
+[docs/INSTALL.md](docs/INSTALL.md) — per-CLI settings paths for WSL, macOS and
+Windows, manual installation, verification, troubleshooting, and migrating from
+`cc-token-statusline`.
 
 ## Develop
 

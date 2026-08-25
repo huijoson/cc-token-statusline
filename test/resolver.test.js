@@ -95,3 +95,16 @@ test("one Format degrades correctly on a Host that cannot supply its Fields", ()
   // Segments disappear instead of printing holes.
   assert.equal(qwen, "Qwen3-Coder | ctx 12% | qwen-project");
 });
+
+test("no transcript to read is Missing; a transcript with no usage is zero", () => {
+  const absent = createResolver(claudeCode, {}, { colour: false });
+  assert.equal(absent.get("in"), undefined, "no transcript_path at all");
+
+  const unreadable = createResolver(claudeCode, { transcript_path: "/nope/nothing.jsonl" }, { colour: false });
+  assert.equal(unreadable.get("in"), undefined, "transcript_path that cannot be read");
+
+  const empty = writeTranscript([{ type: "user", message: { id: "u1" } }]);
+  const quiet = createResolver(claudeCode, { transcript_path: empty }, { colour: false });
+  assert.equal(quiet.get("in"), "0", "a real transcript with no assistant usage");
+  fs.unlinkSync(empty);
+});

@@ -101,13 +101,25 @@ function main(argv, env) {
     return;
   }
 
+  // Empty stdin is normal — a Host may refresh before it has anything to say,
+  // and the Format simply degrades to whatever it can still show. Stdin that
+  // has content but is not JSON is a real fault, and the status line is the
+  // only place a user would ever see it said.
   let payload = {};
-  try {
-    const parsed = JSON.parse(readStdin());
-    if (parsed && typeof parsed === "object") payload = parsed;
-  } catch {
-    // Fall through with an empty Payload: every Field becomes Missing and the
-    // Format degrades to whatever it can still show, which is usually nothing.
+  let fault = null;
+  const raw = readStdin();
+  if (raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) payload = parsed;
+      else fault = "payload is not an object";
+    } catch {
+      fault = "payload is not valid JSON";
+    }
+  }
+  if (fault) {
+    process.stdout.write(`agentline: ${fault}\n`);
+    return;
   }
 
   const colour = !argv.includes("--no-color") && !env.NO_COLOR;
