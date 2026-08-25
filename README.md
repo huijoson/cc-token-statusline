@@ -10,7 +10,9 @@ ctx 8% | wk 83% left (resets 08/26) | doitservers | in 36 out 21.1k th 5.0k cr 1
 
 ## Install
 
-Add this to `~/.claude/settings.json` (or a project's `.claude/settings.json`):
+The package is a zero-dependency Node.js script run via `npx`, so it works the same on **WSL / Linux, macOS, and Windows**. Only prerequisite on each platform: Node.js ≥ 18 (which ships `npx`).
+
+Add this to the platform's Claude Code settings file (`settings.json`):
 
 ```json
 {
@@ -21,7 +23,21 @@ Add this to `~/.claude/settings.json` (or a project's `.claude/settings.json`):
 }
 ```
 
-That's it — `npx` fetches and caches the package on first run. No local clone, no python3 requirement, no other setup.
+### Settings file location per platform
+
+| Platform | Global settings path |
+|----------|----------------------|
+| **WSL / Linux** | `~/.claude/settings.json` |
+| **macOS** | `~/.claude/settings.json` |
+| **Windows** | `%USERPROFILE%\.claude\settings.json` |
+
+You can also use a project-level `.claude/settings.json` on any platform to scope it to one repo.
+
+### Notes
+
+- The `statusLine` command must run in the **same environment as Claude Code**, so it resolves the right `node`/`npx` and the same `transcript_path`. Make sure each platform uses its **native** Claude Code build — e.g. on WSL, don't let the shell resolve to the Windows npm `claude.exe` (a Windows `.exe` can't run from WSL; install the native Linux build and ensure it comes first on `PATH`).
+- `npx` fetches and caches the package on first run, so it needs network once. To avoid that, you can instead run `npm install -g cc-token-statusline` on each platform and use `command`: `"cc-token-statusline"`.
+- No local clone, no python3 requirement, no other setup.
 
 ## What each field means
 
