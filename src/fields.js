@@ -11,9 +11,6 @@ const path = require("path");
 // (src/hosts/*), which is what lets one Format survive a change of Host.
 
 const RESET = "\x1b[0m";
-const GREEN = "\x1b[32m";
-const YELLOW = "\x1b[33m";
-const RED = "\x1b[31m";
 
 function formatTokens(value) {
   const n = Number(value);
@@ -66,15 +63,23 @@ function hourMinute(value) {
 }
 
 // Fullness: high is bad. Remaining: high is good. Two ramps, not one.
+//
+// These name a *role*, not a colour. Which red a role is drawn in belongs to
+// the Theme; whether this number is alarming belongs here, and the Theme never
+// gets to disagree with it.
+const DANGER = "danger";
+const WARN = "warn";
+const OK = "ok";
+
 const fullnessColour = (raw) => {
   const n = clampPercentage(raw);
   if (n === undefined) return null;
-  return n >= 82 ? RED : n >= 75 ? YELLOW : GREEN;
+  return n >= 82 ? DANGER : n >= 75 ? WARN : OK;
 };
 const remainingColour = (raw) => {
   const n = clampPercentage(raw);
   if (n === undefined) return null;
-  return n >= 50 ? GREEN : n >= 20 ? YELLOW : RED;
+  return n >= 50 ? OK : n >= 20 ? WARN : DANGER;
 };
 
 const text = (value) => (typeof value === "string" && value ? value : undefined);
@@ -96,15 +101,15 @@ const FIELDS = {
                attach: { to: "model", source: "[:{effort}]" }, desc: "reasoning effort level", when: "on models that have one" },
   model_id:  { group: "model",  label: "",       source: "payload", format: text, sample: "claude-opus-5", desc: "full model identifier" },
 
-  ctx:       { group: "ctx",    label: "ctx",    source: "payload", format: percent, colour: fullnessColour, sample: "8%", desc: "how full the context window is" },
-  ctx_left:  { group: "ctx",    label: "left",   source: "payload", format: percent, colour: remainingColour, sample: "92%", desc: "how much context window is left" },
+  ctx:       { group: "ctx",    label: "ctx",    source: "payload", format: percent, colour: fullnessColour, meter: true, sample: "8%", desc: "how full the context window is" },
+  ctx_left:  { group: "ctx",    label: "left",   source: "payload", format: percent, colour: remainingColour, meter: true, sample: "92%", desc: "how much context window is left" },
   ctx_size:  { group: "ctx",    label: "of",     source: "payload", format: formatTokens, sample: "200.0k", desc: "total size of the context window" },
 
-  "7d":      { group: "limits", label: "7d",     source: "payload", format: percent, colour: remainingColour, sample: "83%", desc: "weekly quota remaining", when: "on Claude Pro/Max plans" },
+  "7d":      { group: "limits", label: "7d",     source: "payload", format: percent, colour: remainingColour, meter: true, sample: "83%", desc: "weekly quota remaining", when: "on Claude Pro/Max plans" },
   "7d_reset":{ group: "limits", label: "",       source: "payload", format: monthDay, sample: "08/26",
                attach: { to: "7d", source: "[ (resets {7d_reset})]" }, desc: "date the weekly quota resets", when: "on Claude Pro/Max plans" },
-  "5h":      { group: "limits", label: "5h",     source: "payload", format: percent, colour: remainingColour, sample: "61%", desc: "5-hour quota remaining", when: "on Claude Pro/Max plans" },
-  quota:     { group: "limits", label: "quota",  source: "payload", format: percent, colour: remainingColour, sample: "72%", desc: "model quota remaining", when: "on CLIs that report one" },
+  "5h":      { group: "limits", label: "5h",     source: "payload", format: percent, colour: remainingColour, meter: true, sample: "61%", desc: "5-hour quota remaining", when: "on Claude Pro/Max plans" },
+  quota:     { group: "limits", label: "quota",  source: "payload", format: percent, colour: remainingColour, meter: true, sample: "72%", desc: "model quota remaining", when: "on CLIs that report one" },
   quota_reset:{group: "limits", label: "",       source: "payload", format: hourMinute, sample: "21:00", desc: "when that quota resets", when: "on CLIs that report one",
                attach: { to: "quota", source: "[ ({quota_reset})]" } },
   "5h_reset":{ group: "limits", label: "",       source: "payload", format: hourMinute, sample: "14:30",
@@ -134,6 +139,35 @@ const FIELDS = {
                format: (v) => (v === true ? "fast" : undefined), desc: "the word `fast`", when: "when fast mode is on" },
   think:     { group: "state",  label: "",       source: "payload", sample: "think",
                format: (v) => (v === true ? "think" : undefined), desc: "the word `think`", when: "when extended thinking is on" },
+
+  // The one derived Field: its source is other Fields, not the Payload. It
+  // yields a *token*, not a sentence — deciding that the weekly quota is the
+  // most alarming thing right now is data, and phrasing it is the Theme's.
+  //
+  // One token at a time, worst first, because a status line that says four
+  // things at once says none of them.
+  say:       { group: "state",  label: "",       source: "derived", sample: "Thy power waneth!",
+               format: (token) => token,
+               colour: (token) => (token === "agent_running" ? "info" : "danger"),
+               // The trigger is the Threshold colour itself, not a second set of
+               // cut-offs that happens to agree with it today. A number painted
+               // red and a sentence saying all is well cannot both be on the
+               // same line if there is only one place the answer comes from.
+               //
+               // The order is how soon each one stops you, not how bad it is.
+               // A weekly quota at 12% is the worse news, but nothing can be
+               // done about it this hour; a context window at 88% is three
+               // messages away and the reader can act on it now. The one
+               // sentence goes to whoever can be acted on.
+               derive: (raw) => {
+                 if (fullnessColour(raw("ctx")) === DANGER) return "ctx_full";
+                 if (remainingColour(raw("5h")) === DANGER) return "five_hour_low";
+                 if (remainingColour(raw("7d")) === DANGER) return "weekly_low";
+                 if (raw("agent")) return "agent_running";
+                 return undefined;
+               },
+               desc: "one line about the most alarming thing right now",
+               when: "when something is worth saying" },
 
   in:        { group: "tokens", label: "in",     source: "transcript", format: formatTokens, sample: "36", desc: "input tokens, whole conversation" },
   out:       { group: "tokens", label: "out",    source: "transcript", format: formatTokens, sample: "21.1k", desc: "output tokens, whole conversation" },

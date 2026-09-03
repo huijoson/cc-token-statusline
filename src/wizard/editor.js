@@ -16,9 +16,10 @@ const INVERSE = "\x1b[7m";
 // cursor, and every keystroke shows the finished result rather than a proxy
 // for it. Selection, ordering and labels then all happen on one screen.
 class LineEditor {
-  constructor({ host, resolver, format, separator = " | ", out = process.stdout }) {
+  constructor({ host, resolver, format, separator = " | ", paint = {}, out = process.stdout }) {
     this.host = host;
     this.resolver = resolver;
+    this.paint = paint;
     this.separator = separator;
     this.screen = new Screen(out);
     this.out = out;
@@ -32,7 +33,7 @@ class LineEditor {
   // Each Segment rendered on its own, so the cursor can be placed under one.
   parts() {
     return this.segments.map((source) => {
-      const text = renderFormat(source, this.resolver, { separator: this.separator });
+      const text = renderFormat(source, this.resolver, { separator: this.separator, ...this.paint });
       return { source, text, hidden: text === "" };
     });
   }

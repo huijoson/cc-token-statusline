@@ -94,16 +94,35 @@ function parseFormat(source) {
   return segments;
 }
 
+// Literal text is coloured here and nowhere else, by functions the Theme
+// supplies. There are two kinds of it, because they are not the same kind of
+// thing: the words a Format's author wrote are content, and the punctuation
+// around them is the skeleton holding the content up — the same skeleton the
+// Separator belongs to.
+//
+// Whitespace is matched by neither run and so is never wrapped, which is what
+// lets `collapse` keep working on the result.
+const WORD_RUN = /^[\p{L}\p{N}_]/u;
+const RUNS = /[\p{L}\p{N}_]+|[^\p{L}\p{N}_\s]+/gu;
+
+function paintCore(text, paint) {
+  if (!paint || (!paint.word && !paint.punct)) return text;
+  return text.replace(RUNS, (run) => {
+    const brush = WORD_RUN.test(run) ? paint.word : paint.punct;
+    return brush ? brush(run) : run;
+  });
+}
+
 // `resolver.has(key)` distinguishes an unknown Field from a Missing one: an
 // unknown key is passed through literally so a typo is visible in the Status
 // line itself, which is the only output channel a user ever sees.
-function renderNodes(nodes, resolver) {
+function renderNodes(nodes, resolver, paint) {
   let out = "";
   let missing = false;
 
   for (const node of nodes) {
     if (node.t === "text") {
-      out += node.v;
+      out += paintCore(node.v, paint);
       continue;
     }
     if (node.t === "field") {
@@ -117,7 +136,7 @@ function renderNodes(nodes, resolver) {
       continue;
     }
     // Group: absorbs the Missing signal instead of propagating it outward.
-    const inner = renderNodes(node.c, resolver);
+    const inner = renderNodes(node.c, resolver, paint);
     if (!inner.missing) out += inner.text;
   }
 
@@ -129,7 +148,11 @@ function collapse(text) {
 }
 
 function renderFormat(source, resolver, options = {}) {
-  const separator = options.separator === undefined ? " | " : options.separator;
+  const paint = { word: options.paintText, punct: options.paintPunct };
+  const rawSeparator = options.separator === undefined ? " | " : options.separator;
+  // A Separator is punctuation whichever characters it is made of.
+  const brush = options.paintSeparator;
+  const separator = paintCore(rawSeparator, { word: brush, punct: brush });
   let segments;
   try {
     segments = parseFormat(source);
@@ -140,7 +163,7 @@ function renderFormat(source, resolver, options = {}) {
 
   const rendered = [];
   for (const segment of segments) {
-    const result = renderNodes(segment, resolver);
+    const result = renderNodes(segment, resolver, paint);
     if (result.missing) continue;
     const text = collapse(result.text);
     if (text) rendered.push(text);

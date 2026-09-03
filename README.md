@@ -4,7 +4,7 @@ Design your own agent-CLI status line. One Format string, several CLIs, zero npm
 dependencies.
 
 ```
-Opus 5:high | ctx 8% | 7d 83% left (resets 08/26) | doitservers | in 36 out 21.1k th 5.0k cr 1.2M cw 15.3k tot 1.3M
+Opus 5:high | ctx 8% | 5h 61% left (resets 14:30) | 7d 83% left (resets 08/26) | doitservers | in 36 out 21.1k th 5.0k cr 1.2M cw 15.3k tot 1.3M
 ```
 
 Reads the JSON your CLI pipes to stdin, writes one line to stdout, exits. No
@@ -153,18 +153,58 @@ Other notes worth knowing:
 | `--format=…` | the Format. Quote it — an unquoted `\|` is a shell pipe |
 | `HUDLINE_FORMAT` | same thing via the environment, for awkward quoting |
 | `--sep=…` | segment separator, default `" \| "` |
+| `--theme=…` | `plain` (default) or `neon` |
+| `HUDLINE_THEME` | same thing via the environment |
 | `--host=…` | `claude-code` (default) or `qwen-code` |
 | `--show=` / `--hide=` | shorthand that compiles to a Format |
 | `--no-color`, `NO_COLOR` | drop colour |
 | `--print-format` | print the Format actually in effect |
 | `--list-fields` | print the field catalogue |
+| `--list-themes` | print the themes |
 | `--no-tui` | skip the full-screen editor in `init` / `edit` |
 
 Colours are threshold colours and belong to the field, not the Format: `ctx`
 turns yellow at 75% and red at 82%, quota fields turn yellow below 50% and red
-below 20%. Literal text you write is never coloured.
+below 20%. You never write a colour into a Format — a theme does that.
 
-Precedence: `--format` › `--show`/`--hide` › `HUDLINE_FORMAT` › default.
+Precedence: `--format` › `--show`/`--hide` › `HUDLINE_FORMAT` › theme › default.
+
+## Themes
+
+A theme is the *how*, as against the Format's *what*: the palette, the colour
+of the labels and separators you wrote, which representation of a field is
+used, and the wording of the narration. A Format never names a colour, so the
+same Format survives a change of theme the same way it survives a change of
+CLI.
+
+```sh
+npx -y hudline --theme=neon
+```
+
+```
+ Opus 5 :high ★ CTX ▱▱▱▱▱ 8% ★ 5H ▰▰▰▱▱ 61% ★ 7D ▰▰▰▰▱ 83% ★ doitservers
+```
+
+`neon` takes its palette from [sherly.dev](https://sherly.dev): hot pink
+labels, a graphite separator, and the model name as a filled chip. Percentages
+render as meters, and when something is actually wrong the line grows a
+narrator:
+
+```
+ Opus 5 :high ★ CTX ▰▰▰▰▱ 88% ★ 5H ▱▱▱▱▱ 6% ★ 7D ▰▱▱▱▱ 12% ★ doitservers ★ Thy context runneth over!
+```
+
+That last segment is the `{say}` field, and it is in the default Format too —
+in plain words there, rather than in the theme's. It reports state, not events:
+it cannot tell you what just happened, because nothing here remembers a
+previous render. It says one thing at a time and picks whichever will stop you
+soonest, not whichever number is worst — a context window three messages from
+full outranks a weekly quota you can do nothing about until Tuesday. It is
+silent unless a number beside it has already gone red.
+
+Colour depth follows `COLORTERM` and `TERM`: 24-bit where the terminal says so,
+256 where it does not, the basic eight otherwise. `--no-color` and `NO_COLOR`
+still turn the lot off, and the meters and separators stay.
 
 ## Editing an existing line
 
@@ -176,9 +216,9 @@ Reads the Format back out of your CLI's settings and drops you into the editor
 on your current line.
 
 ```
-  Opus 5:high │ ctx 8% │ 7d 83% left (resets 08/26) │ doitservers
-                        ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-  segment 3/4 · {7d} {7d_reset}
+  Opus 5:high │ ctx 8% │ 5h 61% left (resets 14:30) │ 7d 83% left (resets 08/26) │ doitservers
+                        ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+  segment 3/5 · {5h} {5h_reset}
 
   ← → move   < > reorder   d delete   a add field   e edit text
 ```

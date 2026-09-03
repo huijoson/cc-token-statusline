@@ -148,9 +148,12 @@ function launcherFor(packageName = "hudline") {
   return `node ${entry}`;
 }
 
-function commandFor(host, format, packageName = "hudline", launcher = launcherFor(packageName)) {
+function commandFor(host, format, packageName = "hudline", launcher = launcherFor(packageName), themeId) {
   const hostFlag = host.id === "claude-code" ? "" : ` --host=${host.id}`;
-  return `${launcher}${hostFlag} --format=${JSON.stringify(format)}`;
+  // Omitted when it is the default, for the same reason --host is: a flag that
+  // restates the default is noise in a file the user has to live with.
+  const themeFlag = themeId && themeId !== "plain" ? ` --theme=${themeId}` : "";
+  return `${launcher}${hostFlag}${themeFlag} --format=${JSON.stringify(format)}`;
 }
 
 module.exports = {

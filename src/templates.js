@@ -16,7 +16,7 @@ const TEMPLATES = [
     // be without them — which is the whole point of Missing disappearing.
     format:
       "{model}[:{effort}]|ctx {ctx}|5h {5h} left[ (resets {5h_reset})]|7d {7d} left[ (resets {7d_reset})]|" +
-      "quota {quota}[ ({quota_reset})]|{branch}|{cwd}|" +
+      "quota {quota}[ ({quota_reset})]|{branch}|{cwd}|{say}|" +
       "[in {in}] [out {out}] [th {th}] [cr {cr}] [cw {cw}] [tot {tot}]",
   },
   {
@@ -29,7 +29,7 @@ const TEMPLATES = [
     description: "both quota windows, for when you are near the ceiling",
     format:
       "{model}[:{effort}]|ctx {ctx}|5h {5h}[ ({5h_reset})]|7d {7d}[ ({7d_reset})]|" +
-      "quota {quota}[ ({quota_reset})]|{cwd}",
+      "quota {quota}[ ({quota_reset})]|{cwd}|{say}",
   },
   {
     name: "tokens",

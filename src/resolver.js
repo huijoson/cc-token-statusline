@@ -1,7 +1,8 @@
 "use strict";
 
-const { getField, resolveKey, RESET } = require("./fields.js");
+const { getField, resolveKey } = require("./fields.js");
 const { fieldsUsed } = require("./format.js");
+const { getTheme, createPainter, meter } = require("./themes.js");
 
 // Binds a Format to a Host's Payload. Three things decide whether a
 // Placeholder produces text:
@@ -9,8 +10,13 @@ const { fieldsUsed } = require("./format.js");
 //   unknown key      -> `has` is false; the Format prints it literally
 //   Host can't supply-> `get` returns undefined; the Field is Missing
 //   value absent     -> `get` returns undefined; the Field is Missing
+//
+// A fourth party decides what the text *looks* like: the Theme, via a painter.
+// It chooses the Representation and the palette, and nothing else here knows
+// what a colour is.
 function createResolver(host, payload, options = {}) {
   const colour = options.colour !== false;
+  const painter = options.painter ?? createPainter(getTheme(), { colour });
   const cache = new Map();
   let transcriptTotals;
 
@@ -36,12 +42,24 @@ function createResolver(host, payload, options = {}) {
   const rawValue = (key) => {
     const field = getField(key);
     if (!field) return undefined;
+    // A derived Field reads other Fields rather than the Payload. It is the one
+    // place a Field is allowed to know that other Fields exist, and it still
+    // never learns which Host it is running on.
+    if (field.source === "derived") return field.derive(rawValue);
     if (typeof host.extract?.[key] === "function") return host.extract[key](payload);
     if (field.source !== "transcript") return undefined;
     if (!host.transcript || !needsTranscript) return undefined;
     const totals = readTranscript();
     if (!totals) return undefined;
     return host.transcript.map[key]?.(totals);
+  };
+
+  // The Representation, chosen by the Theme out of what the Field offers.
+  const represent = (key, field, raw) => {
+    if (field.source === "derived") return painter.phrase(field.format(raw), rawValue);
+    const formatted = field.format(raw);
+    if (formatted === undefined || formatted === "") return formatted;
+    return painter.meters && field.meter ? `${meter(raw)} ${formatted}` : formatted;
   };
 
   return {
@@ -56,10 +74,10 @@ function createResolver(host, payload, options = {}) {
       let out;
       const raw = rawValue(canonical);
       if (raw !== undefined && raw !== null) {
-        const formatted = field.format(raw);
-        if (formatted !== undefined && formatted !== "") {
-          const ansi = colour && field.colour ? field.colour(raw) : null;
-          out = ansi ? `${ansi}${formatted}${RESET}` : formatted;
+        const shown = represent(canonical, field, raw);
+        if (shown !== undefined && shown !== "") {
+          const role = field.colour ? field.colour(raw) : null;
+          out = painter.isChip(canonical) ? painter.chip(shown) : painter.wrap(role, shown);
         }
       }
       cache.set(canonical, out);

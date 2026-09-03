@@ -9,6 +9,7 @@ const { hostSupports } = require("../catalogue.js");
 const { fieldsUsed } = require("../format.js");
 const { LineEditor, FieldPicker, fieldKeysIn } = require("./editor.js");
 const { Select, TextInput } = require("./select.js");
+const { THEMES, DEFAULT_THEME, getTheme, createPainter } = require("../themes.js");
 const { decodeAll } = require("./keys.js");
 const install = require("./install.js");
 const numbered = require("./numbered.js");
@@ -68,8 +69,8 @@ function segmentFor(key) {
   return base + suffix;
 }
 
-async function runTui({ host, resolver, format }) {
-  const editor = new LineEditor({ host, resolver, format });
+async function runTui({ host, resolver, format, paint }) {
+  const editor = new LineEditor({ host, resolver, format, separator: paint.separator, paint });
   // One driver, a stack of screens: the editor is always the bottom, and the
   // field picker and text input are pushed on top of it.
   const driver = {
@@ -121,8 +122,48 @@ async function runTui({ host, resolver, format }) {
   return keyLoop([driver]);
 }
 
-function printSnippet(host, format, packageName) {
-  const command = install.commandFor(host, format, packageName);
+function paintWith(painter) {
+  return {
+    separator: painter.separator,
+    paintText: (t) => painter.wrap("label", t),
+    paintPunct: (t) => painter.wrap("punct", t),
+    paintSeparator: (t) => painter.wrap("punct", t),
+  };
+}
+
+async function pickTheme(argv, mode, host) {
+  const flagged = argv.find((arg) => arg.startsWith("--theme="));
+  if (flagged) return getTheme(flagged.slice("--theme=".length)) ?? getTheme(DEFAULT_THEME);
+  if (mode !== "tui") return getTheme(DEFAULT_THEME);
+
+  // Previewed in itself: the point of choosing a Theme is seeing it, and a
+  // description of a colour scheme is worth nothing next to the thing.
+  const items = THEMES.map((theme) => {
+    const painter = createPainter(theme);
+    const resolver = createSampleResolver(host, { painter });
+    return {
+      label: theme.id,
+      detail: renderFormat(theme.format ?? DEFAULT_FORMAT, resolver, paintWith(painter)),
+      theme,
+    };
+  });
+
+  const select = new Select({ title: "Which look?", items });
+  const driver = {
+    result: undefined,
+    render: () => select.render(),
+    handle(key) {
+      const outcome = select.handle(key);
+      if (outcome === "submit") { this.result = select.value().theme; return "exit"; }
+      if (outcome === "cancel") { this.result = null; return "exit"; }
+      return null;
+    },
+  };
+  return keyLoop([driver]);
+}
+
+function printSnippet(host, format, packageName, themeId) {
+  const command = install.commandFor(host, format, packageName, undefined, themeId);
   const file = install.settingsPathFor(host);
   const key = host.settingsKey.join(".");
   const snippet = JSON.stringify(
@@ -139,16 +180,16 @@ function printSnippet(host, format, packageName) {
   ].join("\n");
 }
 
-async function confirmAndWrite(host, format, packageName) {
+async function confirmAndWrite(host, format, packageName, themeId) {
   const file = install.settingsPathFor(host);
   const settings = install.readSettings(file);
-  const command = install.commandFor(host, format, packageName);
+  const command = install.commandFor(host, format, packageName, undefined, themeId);
 
   if (!settings.writable) {
     process.stdout.write(
       `\n  ${DIM}Not writing ${file}: ${settings.reason}.${RESET}\n` +
       `  ${DIM}Your settings are left untouched.${RESET}\n` +
-      printSnippet(host, format, packageName)
+      printSnippet(host, format, packageName, themeId)
     );
     return;
   }
@@ -164,7 +205,7 @@ async function confirmAndWrite(host, format, packageName) {
 
   const answer = (await numbered.ask("  Write this change? [y/N] ")).trim().toLowerCase();
   if (answer !== "y" && answer !== "yes") {
-    process.stdout.write(`\n  Cancelled. Nothing was written.\n${printSnippet(host, format, packageName)}`);
+    process.stdout.write(`\n  Cancelled. Nothing was written.\n${printSnippet(host, format, packageName, themeId)}`);
     return;
   }
 
@@ -209,12 +250,12 @@ async function pickHost(argv, mode) {
   return keyLoop([driver]);
 }
 
-async function pickStart(host, resolver, current, mode) {
+async function pickStart(host, resolver, current, mode, paint) {
   const items = [];
   if (current) {
     items.push({
       label: "your current status line",
-      detail: renderFormat(current, resolver),
+      detail: renderFormat(current, resolver, paint),
       format: current,
     });
   }
@@ -226,7 +267,7 @@ async function pickStart(host, resolver, current, mode) {
     const absent = [...fieldsUsed(template.format)].filter((key) => !hostSupports(host, key));
     items.push({
       label: template.name,
-      detail: renderFormat(template.format, resolver)
+      detail: renderFormat(template.format, resolver, paint)
         + (absent.length ? `\n     ${DIM}${absent.map((k) => `{${k}}`).join(" ")} not on ${host.name}${RESET}` : ""),
       format: template.format,
     });
@@ -266,6 +307,18 @@ function parseFormatFromCommand(command) {
   return raw;
 }
 
+function parseThemeFromCommand(command) {
+  if (typeof command !== "string") return null;
+  const match = command.match(/--theme=(\S+)/);
+  return match ? match[1] : null;
+}
+
+function currentTheme(host) {
+  const settings = install.readSettings(install.settingsPathFor(host));
+  const value = install.getIn(settings.data, host.settingsKey);
+  return parseThemeFromCommand(value && typeof value === "object" ? value.command : undefined);
+}
+
 function currentFormat(host) {
   const settings = install.readSettings(install.settingsPathFor(host));
   const value = install.getIn(settings.data, host.settingsKey);
@@ -278,29 +331,34 @@ async function run(command, argv, env) {
   const host = await pickHost(argv, mode);
   if (!host) return;
 
-  const resolver = createSampleResolver(host);
   const existing = currentFormat(host);
+  const theme = await pickTheme(argv, mode, host)
+    ?? getTheme(currentTheme(host)) ?? getTheme(DEFAULT_THEME);
+  if (!theme) return;
+  const painter = createPainter(theme);
+  const paint = paintWith(painter);
+  const resolver = createSampleResolver(host, { painter });
 
   if (mode === "print") {
     process.stdout.write(
       `\n  ${BOLD}hudline${RESET} ${DIM}— this terminal is not interactive` +
       ` (run it in a plain shell for the editor)${RESET}\n\n` +
       TEMPLATES.map((template) =>
-        `  ${BOLD}${template.name}${RESET}\n    ${renderFormat(template.format, resolver)}\n` +
+        `  ${BOLD}${template.name}${RESET}\n    ${renderFormat(template.format, resolver, paint)}\n` +
         `    ${DIM}--format=${JSON.stringify(template.format)}${RESET}\n`
       ).join("\n") +
-      printSnippet(host, existing ?? DEFAULT_FORMAT, packageName)
+      printSnippet(host, existing ?? theme.format ?? DEFAULT_FORMAT, packageName, theme.id)
     );
     return;
   }
 
   const start = command === "edit" && existing
     ? existing
-    : await pickStart(host, resolver, existing, mode);
+    : await pickStart(host, resolver, existing, mode, paint);
   if (!start) return;
 
   const format = mode === "tui"
-    ? await runTui({ host, resolver, format: start })
+    ? await runTui({ host, resolver, format: start, paint })
     : await numbered.run({ host, resolver });
 
   if (!format) {
@@ -308,9 +366,12 @@ async function run(command, argv, env) {
     return;
   }
 
-  process.stdout.write(`\n  ${renderFormat(format, resolver)}\n`);
+  process.stdout.write(`\n  ${renderFormat(format, resolver, paint)}\n`);
   process.stdout.write(`  ${DIM}--format=${JSON.stringify(format)}${RESET}\n`);
-  await confirmAndWrite(host, format, packageName);
+  await confirmAndWrite(host, format, packageName, theme.id);
 }
 
-module.exports = { run, capability, currentFormat, parseFormatFromCommand, segmentFor };
+module.exports = {
+  run, capability, currentFormat, currentTheme,
+  parseFormatFromCommand, parseThemeFromCommand, segmentFor,
+};

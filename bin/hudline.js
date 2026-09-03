@@ -6,6 +6,7 @@ const { createResolver } = require("../src/resolver.js");
 const { getHost } = require("../src/hosts/index.js");
 const { DEFAULT_FORMAT, buildFormat, catalogueOrder } = require("../src/templates.js");
 const { getField, resolveKey } = require("../src/fields.js");
+const { THEMES, getTheme, createPainter } = require("../src/themes.js");
 
 // Two programs share this entry point and have opposite lifetimes: the
 // renderer is spawned several times a second and must start instantly; the
@@ -40,11 +41,28 @@ function formatFromShowHide(argv) {
   return buildFormat(keys);
 }
 
-function resolveFormat(argv, env) {
+// A Theme never overrides a Format somebody wrote: it only supplies one when
+// nobody did. Same three tiers as everything else here — flag, environment,
+// built-in default.
+function resolveFormat(argv, env, theme) {
   return flag(argv, "format")
     ?? formatFromShowHide(argv)
     ?? env.HUDLINE_FORMAT
+    ?? theme?.format
     ?? DEFAULT_FORMAT;
+}
+
+function resolveTheme(argv, env) {
+  const name = flag(argv, "theme") ?? env.HUDLINE_THEME;
+  return { name, theme: getTheme(name) };
+}
+
+function listThemes() {
+  const lines = ["Themes", ""];
+  for (const theme of THEMES) {
+    lines.push(`  \x1b[1m${theme.id}\x1b[0m  \x1b[2m${theme.description}\x1b[0m`);
+  }
+  return lines.join("\n");
 }
 
 function readStdin() {
@@ -94,7 +112,18 @@ function main(argv, env) {
     return;
   }
 
-  const format = resolveFormat(argv, env);
+  if (argv.includes("--list-themes")) {
+    process.stdout.write(listThemes() + "\n");
+    return;
+  }
+
+  const { name: themeName, theme } = resolveTheme(argv, env);
+  if (!theme) {
+    process.stdout.write(`hudline: unknown theme ${themeName}\n`);
+    return;
+  }
+
+  const format = resolveFormat(argv, env, theme);
 
   if (argv.includes("--print-format")) {
     process.stdout.write(format + "\n");
@@ -123,10 +152,16 @@ function main(argv, env) {
   }
 
   const colour = !argv.includes("--no-color") && !env.NO_COLOR;
-  const resolver = createResolver(host, payload, { colour, format });
+  const painter = createPainter(theme, { colour, depth: undefined });
+  const resolver = createResolver(host, payload, { colour, format, painter });
   const separator = flag(argv, "sep");
   process.stdout.write(
-    renderFormat(format, resolver, { separator: separator === undefined ? " | " : separator }) + "\n"
+    renderFormat(format, resolver, {
+      separator: separator === undefined ? painter.separator : separator,
+      paintText: (t) => painter.wrap("label", t),
+      paintPunct: (t) => painter.wrap("punct", t),
+      paintSeparator: (t) => painter.wrap("punct", t),
+    }) + "\n"
   );
 }
 
@@ -134,4 +169,4 @@ if (require.main === module) {
   main(process.argv.slice(2), process.env);
 }
 
-module.exports = { main, resolveFormat, formatFromShowHide };
+module.exports = { main, resolveFormat, resolveTheme, formatFromShowHide };
