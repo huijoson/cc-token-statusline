@@ -13,12 +13,19 @@ const PAYLOAD = JSON.stringify({
   model: { display_name: "Opus 5" },
   effort: { level: "high" },
   context_window: { used_percentage: 8 },
-  rate_limits: { seven_day: { used_percentage: 17, resets_at: 1787788800 } },
+  rate_limits: {
+    five_hour: { used_percentage: 39, resets_at: 1787740200 },
+    seven_day: { used_percentage: 17, resets_at: 1787788800 },
+  },
   cwd: "/home/you/doitservers",
 });
 
 const run = (args) =>
-  execFileSync(process.execPath, [BIN, ...args], { input: PAYLOAD, encoding: "utf8" }).trim();
+  execFileSync(process.execPath, [BIN, ...args], {
+    input: PAYLOAD,
+    encoding: "utf8",
+    env: { ...process.env, TZ: "UTC" },
+  }).trim();
 
 test("--format wins over --show, which wins over the environment", () => {
   assert.equal(resolveFormat(["--format=X", "--show=ctx"], { HUDLINE_FORMAT: "Y" }), "X");
@@ -39,7 +46,7 @@ test("the default line renders end to end", () => {
   // report and disappears rather than claiming zero.
   assert.equal(
     run(["--no-color"]),
-    "Opus 5:high | ctx 8% | 7d 83% left (resets 08/27) | doitservers"
+    "Opus 5:high | ctx 8% | 5h 61% left (resets 10:30) | 7d 83% left (resets 08/27) | doitservers"
   );
 });
 

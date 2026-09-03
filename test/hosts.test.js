@@ -71,9 +71,9 @@ test("Copilot's settings file is looked for under both documented names", () => 
   assert.match(paths[1], /\.copilot[/\\]settings\.json$/);
 });
 
-test("the default Format is unchanged on Claude Code by the Fields added for other CLIs", () => {
+test("the default Format displays both Claude Code quota windows", () => {
   const line = renderFormat(DEFAULT_FORMAT, createSampleResolver(claudeCode, { colour: false }));
-  assert.match(line, /^Opus 5:high \| ctx 8% \| 7d 83% left \(resets \d\d\/\d\d\) \| doitservers \| in 36 /);
+  assert.match(line, /^Opus 5:high \| ctx 8% \| 5h 61% left \(resets \d\d:\d\d\) \| 7d 83% left \(resets \d\d\/\d\d\) \| doitservers \| in 36 /);
   assert.doesNotMatch(line, /quota|branch/);
 });
 

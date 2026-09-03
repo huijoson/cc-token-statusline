@@ -10,12 +10,12 @@ const { getField, GROUP_ORDER, FIELD_KEYS } = require("./fields.js");
 const TEMPLATES = [
   {
     name: "default",
-    description: "model, context, weekly quota, directory, full token breakdown",
+    description: "model, context, 5-hour and weekly quotas, directory, full token breakdown",
     // `quota` and `branch` are here for the CLIs that report them. On one that
     // does not, they disappear and the line is byte-identical to what it would
     // be without them — which is the whole point of Missing disappearing.
     format:
-      "{model}[:{effort}]|ctx {ctx}|7d {7d} left[ (resets {7d_reset})]|" +
+      "{model}[:{effort}]|ctx {ctx}|5h {5h} left[ (resets {5h_reset})]|7d {7d} left[ (resets {7d_reset})]|" +
       "quota {quota}[ ({quota_reset})]|{branch}|{cwd}|" +
       "[in {in}] [out {out}] [th {th}] [cr {cr}] [cw {cw}] [tot {tot}]",
   },
