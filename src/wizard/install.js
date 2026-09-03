@@ -3,6 +3,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { DEFAULT_THEME } = require("../themes.js");
 
 // A Host's settings file belongs to the Host and to the user. Three rules
 // follow, and none of them is optional:
@@ -151,8 +152,9 @@ function launcherFor(packageName = "hudline") {
 function commandFor(host, format, packageName = "hudline", launcher = launcherFor(packageName), themeId) {
   const hostFlag = host.id === "claude-code" ? "" : ` --host=${host.id}`;
   // Omitted when it is the default, for the same reason --host is: a flag that
-  // restates the default is noise in a file the user has to live with.
-  const themeFlag = themeId && themeId !== "plain" ? ` --theme=${themeId}` : "";
+  // restates the default is noise in a file the user has to live with. Which
+  // way round that falls is DEFAULT_THEME's to say, not this function's.
+  const themeFlag = themeId && themeId !== DEFAULT_THEME ? ` --theme=${themeId}` : "";
   return `${launcher}${hostFlag}${themeFlag} --format=${JSON.stringify(format)}`;
 }
 

@@ -46,6 +46,11 @@ test("the default line renders end to end", () => {
   // report and disappears rather than claiming zero.
   assert.equal(
     run(["--no-color"]),
+    "Opus 5:high ★ CTX ▱▱▱▱▱ 8% ★ 5H ▰▰▰▱▱ 61% ★ 7D ▰▰▰▰▱ 83% ★ doitservers"
+  );
+  // The same payload without the designed look, which is one flag away.
+  assert.equal(
+    run(["--no-color", "--theme=plain"]),
     "Opus 5:high | ctx 8% | 5h 61% left (resets 10:30) | 7d 83% left (resets 08/27) | doitservers"
   );
 });
@@ -54,7 +59,7 @@ test("NO_COLOR is honoured, since this output gets piped elsewhere", () => {
   const out = execFileSync(process.execPath, [BIN, "--format={model}|ctx {ctx}"], {
     input: PAYLOAD, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" },
   }).trim();
-  assert.equal(out, "Opus 5 | ctx 8%");
+  assert.equal(out, "Opus 5 ★ ctx ▱▱▱▱▱ 8%");
 });
 
 test("empty stdin is normal; stdin that is not JSON is reported in the line", () => {
@@ -73,5 +78,6 @@ test("--print-format explains which Format is actually in effect", () => {
 });
 
 test("--sep replaces the Separator without touching the Format", () => {
-  assert.equal(run(["--no-color", "--format={model}|ctx {ctx}", "--sep= · "]), "Opus 5 · ctx 8%");
+  // Beats the Theme's Separator, which is otherwise ★ under the default look.
+  assert.equal(run(["--no-color", "--format={model}|ctx {ctx}", "--sep= · "]), "Opus 5 · ctx ▱▱▱▱▱ 8%");
 });

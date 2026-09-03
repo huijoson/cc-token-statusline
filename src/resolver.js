@@ -2,7 +2,7 @@
 
 const { getField, resolveKey } = require("./fields.js");
 const { fieldsUsed } = require("./format.js");
-const { getTheme, createPainter, meter } = require("./themes.js");
+const { getTheme, createPainter, meter, NEUTRAL_THEME } = require("./themes.js");
 
 // Binds a Format to a Host's Payload. Three things decide whether a
 // Placeholder produces text:
@@ -16,7 +16,7 @@ const { getTheme, createPainter, meter } = require("./themes.js");
 // what a colour is.
 function createResolver(host, payload, options = {}) {
   const colour = options.colour !== false;
-  const painter = options.painter ?? createPainter(getTheme(), { colour });
+  const painter = options.painter ?? createPainter(getTheme(NEUTRAL_THEME), { colour });
   const cache = new Map();
   let transcriptTotals;
 

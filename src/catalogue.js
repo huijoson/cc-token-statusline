@@ -19,6 +19,10 @@ function hostSupports(host, key) {
   const field = getField(key);
   if (!field) return false;
   if (typeof host.extract?.[key] === "function") return true;
+  // A derived Field is supplied by other Fields, so no Host supplies it and
+  // every Host supports it. What it derives *from* may well be Missing here —
+  // that is the middle state, and `when` is where it gets explained.
+  if (field.source === "derived") return true;
   return field.source === "transcript" && Boolean(host.transcript?.map?.[key]);
 }
 

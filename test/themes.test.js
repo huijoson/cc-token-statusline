@@ -5,7 +5,9 @@ const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 
-const { getTheme, createPainter, meter, METER_CELLS, colourDepth } = require("../src/themes.js");
+const {
+  getTheme, createPainter, meter, METER_CELLS, colourDepth, DEFAULT_THEME, THEMES,
+} = require("../src/themes.js");
 const { createResolver, createSampleResolver } = require("../src/resolver.js");
 const { renderFormat } = require("../src/format.js");
 const { displayWidth } = require("../src/width.js");
@@ -198,17 +200,39 @@ test("HUDLINE_THEME is honoured, and the flag beats it", () => {
 });
 
 test("the installed command names a Theme only when it is not the default", () => {
-  const withTheme = commandFor(claudeCode, "{ctx}", "hudline", "npx -y hudline@latest", "neon");
-  assert.match(withTheme, / --theme=neon /);
-  const without = commandFor(claudeCode, "{ctx}", "hudline", "npx -y hudline@latest", "plain");
-  assert.doesNotMatch(without, /--theme/);
+  const escapeHatch = commandFor(claudeCode, "{ctx}", "hudline", "npx -y hudline@latest", "plain");
+  assert.match(escapeHatch, / --theme=plain /);
+  const theDefault = commandFor(claudeCode, "{ctx}", "hudline", "npx -y hudline@latest", DEFAULT_THEME);
+  assert.doesNotMatch(theDefault, /--theme/);
 });
 
 test("the plain Theme leaves the line exactly as it was before Themes existed", () => {
   assert.equal(
-    run(["--no-color"]),
+    run(["--no-color", "--theme=plain"]),
     "Opus 5:high | ctx 8% | 5h 61% left | 7d 83% left | doitservers"
   );
   const sample = createSampleResolver(claudeCode, { colour: false });
   assert.match(renderFormat(DEFAULT_FORMAT, sample), /^Opus 5:high \| ctx 8% \|/);
+});
+
+test("a derived Field is not reported as something this CLI cannot do", () => {
+  // It is supplied by other Fields, so no Host supplies it and every Host has
+  // it. Calling that "n/a" tells someone their CLI lacks the one Field that
+  // works everywhere.
+  const { catalogueRows } = require("../src/catalogue.js");
+  for (const host of [claudeCode, require("../src/hosts/qwen-code.js")]) {
+    const rows = catalogueRows(host, createSampleResolver(host, { colour: false }));
+    const say = rows.find((row) => row.key === "say");
+    assert.ok(say.supported, `${host.id} should support {say}`);
+    // Nothing is wrong in a sample payload, so it is Missing, not absent.
+    assert.equal(say.value, undefined, host.id);
+  }
+});
+
+test("--list-themes names every Theme and marks which one you get for free", () => {
+  const out = run(["--list-themes"]).replace(/\x1b\[[0-9;]*m/g, "");
+  for (const theme of THEMES) assert.match(out, new RegExp(`\\b${theme.id}\\b`), theme.id);
+  assert.match(out, new RegExp(`${DEFAULT_THEME}\\s+.*\\(default\\)`));
+  // Exactly one, or the word means nothing.
+  assert.equal(out.match(/\(default\)/g).length, 1);
 });

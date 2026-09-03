@@ -6,7 +6,7 @@ const { createResolver } = require("../src/resolver.js");
 const { getHost } = require("../src/hosts/index.js");
 const { DEFAULT_FORMAT, buildFormat, catalogueOrder } = require("../src/templates.js");
 const { getField, resolveKey } = require("../src/fields.js");
-const { THEMES, getTheme, createPainter } = require("../src/themes.js");
+const { THEMES, getTheme, createPainter, DEFAULT_THEME } = require("../src/themes.js");
 
 // Two programs share this entry point and have opposite lifetimes: the
 // renderer is spawned several times a second and must start instantly; the
@@ -60,7 +60,8 @@ function resolveTheme(argv, env) {
 function listThemes() {
   const lines = ["Themes", ""];
   for (const theme of THEMES) {
-    lines.push(`  \x1b[1m${theme.id}\x1b[0m  \x1b[2m${theme.description}\x1b[0m`);
+    const mark = theme.id === DEFAULT_THEME ? "  \x1b[2m(default)\x1b[0m" : "";
+    lines.push(`  \x1b[1m${theme.id.padEnd(7)}\x1b[0m\x1b[2m${theme.description}\x1b[0m${mark}`);
   }
   return lines.join("\n");
 }

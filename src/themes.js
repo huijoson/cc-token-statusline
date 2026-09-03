@@ -107,20 +107,6 @@ const NEON_PHRASES = {
 
 const THEMES = [
   {
-    id: "plain",
-    name: "plain",
-    description: "the line, uncoloured except where a number is alarming",
-    // No hex: at this depth the escapes *are* the palette, and staying on the
-    // basic 8 is what makes the default line safe in any terminal.
-    ansi: { ok: "\x1b[32m", warn: "\x1b[33m", danger: "\x1b[31m", info: "" },
-    palette: {},
-    sep: " | ",
-    meters: false,
-    chips: [],
-    format: null,
-    phrases: PLAIN_PHRASES,
-  },
-  {
     id: "neon",
     name: "neon",
     description: "sherly.dev's palette, with meters and a narrator",
@@ -146,12 +132,37 @@ const THEMES = [
     // plain default, because Meters cost seven cells each — but it carries the
     // same Fields the plain default does where a Host supplies them. Which
     // Fields appear is not a Theme's to decide; only how they look is.
-    format: "{model}[:{effort}]|CTX {ctx}|5H {5h}|7D {7d}|{branch}|{cwd}|{say}",
+    format:
+      "{model}[:{effort}]|CTX {ctx}|5H {5h}|7D {7d}|{branch}|{cwd}|{say}|" +
+      "[IN {in}] [OUT {out}] [TH {th}] [CR {cr}] [CW {cw}] [TOT {tot}]",
     phrases: NEON_PHRASES,
+  },
+  {
+    id: "plain",
+    name: "plain",
+    description: "the line, uncoloured except where a number is alarming",
+    // No hex: at this depth the escapes *are* the palette, and staying on the
+    // basic 8 is what makes the default line safe in any terminal.
+    ansi: { ok: "\x1b[32m", warn: "\x1b[33m", danger: "\x1b[31m", info: "" },
+    palette: {},
+    sep: " | ",
+    meters: false,
+    chips: [],
+    format: null,
+    phrases: PLAIN_PHRASES,
   },
 ];
 
-const DEFAULT_THEME = "plain";
+// The designed look is what a status line is picked for, so it is what a new
+// install gets. `plain` remains one flag away, and is what a terminal without
+// 256 colours or Unicode should be pointed at.
+const DEFAULT_THEME = "neon";
+
+// What a Status line looks like when nobody has chosen: unstyled, not
+// "whatever the product currently ships". A caller that renders without
+// naming a Theme is asking for no Theme, and the product's taste changing
+// underneath it would be a surprise, not a service.
+const NEUTRAL_THEME = "plain";
 
 function getTheme(id) {
   return THEMES.find((theme) => theme.id === (id ?? DEFAULT_THEME));
@@ -200,6 +211,6 @@ function createPainter(theme, { colour = true, depth } = {}) {
 }
 
 module.exports = {
-  THEMES, DEFAULT_THEME, getTheme, createPainter,
+  THEMES, DEFAULT_THEME, NEUTRAL_THEME, getTheme, createPainter,
   colourDepth, escape, meter, METER_CELLS, RESET,
 };
