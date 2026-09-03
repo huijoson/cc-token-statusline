@@ -192,7 +192,21 @@ instead:
 HUDLINE_FORMAT={model}|ctx {ctx}|{cwd}
 ```
 
-Precedence is `--format` › `--show`/`--hide` › `HUDLINE_FORMAT` › the default.
+Precedence is `--format` › `--show`/`--hide` › `HUDLINE_FORMAT` › the theme's
+own Format › the built-in default.
+
+## Choosing how the line looks
+
+A Format says *what* to show; a theme says *how*. They are separate, so a theme
+never changes which fields you get.
+
+```sh
+npx -y hudline --list-themes
+```
+
+`neon` is the default: coloured labels, meters, and a sentence when something
+is wrong. `--theme=plain` is the escape hatch for a terminal without 256
+colours or Unicode.
 
 ## Checking it works
 
@@ -207,8 +221,12 @@ Expected — the quota and token segments disappear because this hand-made
 payload carries neither:
 
 ```
-Opus 5 | ctx 8% | demo
+Opus 5 ★ CTX ▱▱▱▱▱ 8% ★ demo
 ```
+
+That is the `neon` theme, which is what you get by default. If the meters come
+out as boxes your font lacks `▰`/`▱`; `--theme=plain` gives you
+`Opus 5 | ctx 8% | demo` instead and works in any terminal.
 
 And to see what your CLI is actually running:
 
@@ -258,8 +276,13 @@ launches from. A Windows `node.exe` cannot be executed from a Linux process.
 ## Upgrading
 
 With `npx -y hudline`, you get the latest version automatically. Your Format
-is stored expanded in your settings file, so **your line never changes under
-you** when the package updates.
+is stored expanded in your settings file, so **which fields you see never
+changes under you** when the package updates.
+
+How they *look* can. In 0.4.0 the default theme became `neon`, so a line
+installed on 0.3.x keeps its fields and gains colour, meters and a narrator.
+`--theme=plain` restores the earlier appearance exactly. Pinning a version —
+`npx -y hudline@0.3.0` — freezes both.
 
 Installed globally: `npm update -g hudline`.
 
