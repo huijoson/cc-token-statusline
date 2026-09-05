@@ -6,7 +6,7 @@
   "author": "Lawrence (huijoson)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/huijoson/cc-token-statusline.git"
+    "url": "git+https://github.com/huijoson/hudline.git"
   },
   "bin": {
     "hudline": "bin/hudline.js"
@@ -34,8 +34,8 @@
     "cli",
     "tui"
   ],
-  "homepage": "https://github.com/huijoson/cc-token-statusline#readme",
+  "homepage": "https://github.com/huijoson/hudline#readme",
   "bugs": {
-    "url": "https://github.com/huijoson/cc-token-statusline/issues"
+    "url": "https://github.com/huijoson/hudline/issues"
   }
 }
